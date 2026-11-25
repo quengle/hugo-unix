@@ -1032,6 +1032,9 @@ void Flushpbuffer()
 void GetCommand(void)
 {
 	char a[256];
+
+	/* quengle: the game's state to the autosave before each command (herun.c) */
+	quengle_autosave();
 #ifdef USE_TEXTBUFFER
 	int start, width, i, y;
 #endif

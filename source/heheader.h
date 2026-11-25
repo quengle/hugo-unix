@@ -970,6 +970,8 @@ char *GetText(long textaddr);
 char *GetWord(unsigned int a);
 void HandleTailRecursion(long addr);
 void InitGame(void);
+/* quengle autosave (herun.c) */
+void quengle_autosave(void);
 void LoadGame(void);
 void ParseCommandLine(int argc, char *argv[]);
 void PassLocals(int n);

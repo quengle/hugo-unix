@@ -29,6 +29,35 @@ char override_full = 0;
 
 char game_reset = false;		/* for restore, undo, etc. */
 
+/* quengle: autosave. the game's state goes to this file (the host keeps it, see bocfelDialog in host.js) before
+   each command; a continue restores it in place of running init, then waits for the next command, as palmos's
+   AutoResume does. the screen comes back from the host's replay */
+#include "glk.h"
+#include "glkstart.h"
+int SaveGameData(void);
+static const char *quengle_autosave_path = "/autosave/hugo.sav";
+
+static strid_t quengle_autosave_stream(glui32 mode)
+{
+	frefid_t fref = glkunix_fileref_create_by_name_uncleaned(fileusage_SavedGame | fileusage_BinaryMode,
+		(char *)quengle_autosave_path, 0);
+	strid_t s = NULL;
+	if (!fref) return NULL;
+	if (mode == filemode_Write || glk_fileref_does_file_exist(fref))
+		s = glk_stream_open_file(fref, mode, 0);
+	glk_fileref_destroy(fref);
+	return s;
+}
+
+void quengle_autosave(void)
+{
+	if (save) return;	/* a save or restore of the game's own is under way */
+	if (!(save = quengle_autosave_stream(filemode_Write))) return;
+	SaveGameData();
+	glk_stream_close(save, NULL);
+	save = NULL;
+}
+
 struct CODE_BLOCK code_block[MAXSTACKDEPTH];
 int stack_depth;
 int tail_recursion = 0;
