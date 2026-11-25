@@ -329,6 +329,10 @@ Identified:
 	environment variables "HUGO_...", not actual on-disk directories).
 */
 
+#if defined (QUENGLE_RESOURCES)
+HUGO_FILE quengle_open_resource(char *filename, char *resname, long *length);
+#endif
+
 long FindResource(char *filename, char *resname)
 {
 	char resource_in_file[MAX_RES_PATH];
@@ -356,6 +360,17 @@ long FindResource(char *filename, char *resname)
 	if (!strcmp(filename, ""))
 		goto NotinResourceFile;
 
+#if defined (QUENGLE_RESOURCES)
+	/* quengle: ask the display for just this resource (read in place, by range) instead of opening the whole
+	   resourcefile as a glk stream, which reads all of it into memory: Cryptozookeeper's music file is 500 MB.
+	   resource_file is then a memory stream over the resource alone, positioned at its start */
+	strupr(filename);
+	resource_file = quengle_open_resource(filename, resname, &reslength);
+	if (resource_file)
+		return reslength;
+	var[system_status] = STAT_NORESOURCE;
+	goto NotinResourceFile;
+#endif
 
 	/* Open the resourcefile */
 	strupr(filename);
