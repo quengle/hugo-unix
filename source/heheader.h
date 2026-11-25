@@ -971,6 +971,7 @@ char *GetWord(unsigned int a);
 void HandleTailRecursion(long addr);
 void InitGame(void);
 /* quengle autosave (herun.c) */
+extern char quengle_resuming;
 void quengle_autosave(void);
 void LoadGame(void);
 void ParseCommandLine(int argc, char *argv[]);

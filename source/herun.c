@@ -35,7 +35,9 @@ char game_reset = false;		/* for restore, undo, etc. */
 #include "glk.h"
 #include "glkstart.h"
 int SaveGameData(void);
+int RestoreGameData(void);
 static const char *quengle_autosave_path = "/autosave/hugo.sav";
+char quengle_resuming = false;
 
 static strid_t quengle_autosave_stream(glui32 mode)
 {
@@ -56,6 +58,16 @@ void quengle_autosave(void)
 	SaveGameData();
 	glk_stream_close(save, NULL);
 	save = NULL;
+}
+
+static int quengle_restore(void)
+{
+	int ok;
+	if (!(save = quengle_autosave_stream(filemode_Read))) return 0;
+	ok = RestoreGameData();
+	if (save) glk_stream_close(save, NULL);
+	save = NULL;
+	return ok;
 }
 
 struct CODE_BLOCK code_block[MAXSTACKDEPTH];
@@ -237,12 +249,38 @@ RestartDebugger:
 
 	stack_depth = RESET_STACK_DEPTH;
 
+	/* quengle: is there an autosave to continue from? then InitGame leaves init out */
+	{
+		strid_t probe = quengle_autosave_stream(filemode_Read);
+		quengle_resuming = probe != NULL;
+		if (probe) glk_stream_close(probe, NULL);
+	}
+
 	InitGame();
 
 	undoptr = 0;
 	undoturn = 0;
 	undoinvalid = 1;
 	undorecord = 0;
+
+	if (quengle_resuming)
+	{
+		quengle_resuming = false;
+		if (quengle_restore())
+		{
+			game_reset = true;
+			stack_depth = 0;
+			strcpy(errbuf, "");
+			strcpy(oops, "");
+			xverb = true;
+			full_buffer = 0;
+			remaining = 0;
+			goto FreshInput;
+		}
+		/* a bad autosave: start the game properly instead */
+		PassLocals(0);
+		RunRoutine((long)initaddr*address_scale);
+	}
 
 Start:
 	stack_depth = 0;

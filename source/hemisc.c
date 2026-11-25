@@ -1276,7 +1276,9 @@ void InitGame(void)
 	DebugRunRoutine((long)initaddr*address_scale);
 #else
 	PassLocals(0);
-	RunRoutine((long)initaddr*address_scale);
+	/* quengle: continuing from the autosave skips init (title screens, menus); RunGame restores instead */
+	if (!quengle_resuming)
+		RunRoutine((long)initaddr*address_scale);
 #endif
 
 	ret = 0;
